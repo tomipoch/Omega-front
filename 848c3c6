@@ -1,0 +1,55 @@
+[33ma8e1253[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbelen[m[33m, [m[1;31morigin/belen[m[33m, [m[1;31morigin/backup[m[33m, [m[1;32mbackup[m[33m)[m Merge branch 'belen' of https://github.com/tomipoch/Omega-front into belen
+[33m7a55d13[m Merge remote-tracking branch 'origin/belen' into belen
+[33m481f552[m Merge branch 'main' into belen
+[33m061aabe[m Revert "Merge branch 'main' into belen"
+[33m54533f8[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m Merge pull request #4 from tomipoch/belen
+[33m20fd363[m Merge branch 'main' into belen
+[33m848c3c6[m Elimina la edición de estado del formulario de disponibilidad
+[33ma704b6b[m Merge pull request #3 from Fran-SL/main
+[33m2852e5b[m Merge pull request #2 from tomipoch/version2
+[33m38dedff[m Actualiza la gestión de solicitudes de servicio administrativo
+[33m877d939[m[33m ([m[1;31morigin/version2[m[33m, [m[1;32mversion2[m[33m)[m Merge pull request #1 from Fran-SL/Omega_front_fran
+[33meb981df[m Corrección error de visualización reseñas
+[33me2df300[m Correccion
+[33mac2ff7d[m Productos
+[33m691da7f[m Agrego
+[33mde32dc1[m Adds date utility functions and test script
+[33mb4c435a[m Updates routing and component imports
+[33md2b2140[m Adds user management feature for admins
+[33m4136165[m Adds disponibilidad service
+[33mf9c06f1[m Refactors testimonial management pages
+[33me7a66f1[m Updates Admin Dashboard links and labels.
+[33mbb6fd57[m Adds service management page for admins
+[33me7e2804[m Adds loading state and role validation
+[33m1979aab[m Updates logo import path
+[33mf1b2901[m Adds admin and user appointment management
+[33m764daf9[m Componente Citas
+[33m17bdf6f[m boton editar
+[33mba02c62[m Eventos componente
+[33mda3eff9[m actualización
+[33mf9b0a51[m actualizacion de vite
+[33m092e50e[m feat: Organizacion de algunos elementos y creacion de funciones Citas
+[33m761d936[m feat: reseña
+[33m315757d[m feat: solicitud personalizacion
+[33m2e21365[m Tomi
+[33ma75dc64[m feat:
+[33mb3e4b11[m feat: actualizacion de funciones
+[33m1ca40e5[m agendar cita
+[33mba03437[m eso
+[33m4d8b5bf[m feat: Pagina Inicio y Faq Listo
+[33m49bfc79[m Merge branch 'main' of https://github.com/tomipoch/Omega-front
+[33m6fa64dd[m refactor: Se crearon componentes separados para aliviar la carga al navegador, ademas CRUD Usuario esta terminado
+[33mcf8a042[m Update README.md
+[33m78f6a9f[m Update README.md
+[33m13c9cbf[m feat: refactor de componentes, carpetas de organización, función restablecer contraseña, ver perfil, responsive.
+[33mb6298cd[m style: estilos de inicio de sesion y registrar usuario listos
+[33mfec9325[m refactor: eliminacion de redundancias
+[33mbf443a7[m Merge branch 'main' of https://github.com/tomipoch/Omega-front
+[33m559ff8a[m refactor: organizacion de carpetas
+[33m02477a3[m refactor: organizacion de carpetas
+[33mced1ff5[m refactor: organizacion de carpetas y optimizacion de codigo
+[33md8d0b40[m style: cambio en registro user
+[33m350634f[m styles: Estilos de Login, Registro, Header, Footer
+[33mf5516d9[m style: se añaden pagina de registro, login e inicio
+[33m55d7205[m feat:agregando carpetas de componentes y tailwindcss
+[33ma22af58[m Subida de proyecto front
