@@ -12,6 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./services/ProtectedRoute";
+import ChatBot from "./components/ChatBot";
 
 // Páginas principales
 import Home from "./pages/Comun/Home";
@@ -67,6 +68,8 @@ function Layout({ children }) {
         {children}
       </main>
       {!hideHeaderFooter && <Footer />}
+      {/* ChatBot flotante disponible en todas las páginas */}
+      <ChatBot />
     </div>
   );
 }
