@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../services/authContext';
+import { Bounce, toast } from 'react-toastify';
+
 
 const initialForm = {
   nombre_producto: '',
@@ -91,6 +93,7 @@ const ProductosAdmin = () => {
     }
 
     try {
+
       const res = await fetch(url, {
         method,
         headers: {
@@ -98,15 +101,28 @@ const ProductosAdmin = () => {
         },
         body: formData,
       });
+      
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Error al guardar el producto');
       }
+
       fetchProductos();
       handleFormClose();
+
+      toast.success("Producto Agregado Correctamente", {
+        position: "top-right",
+        theme: "colored"
+      });
+
     } catch (err) {
       alert(err.message || 'Error al guardar el producto');
+      toast.error("Error al guardar el producto", {
+        position: "top-right",
+        theme: "colored"
+      });
     }
+
   };
 
   return (
