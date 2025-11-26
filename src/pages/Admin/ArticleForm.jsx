@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import SectionEditor from './SectionEditor';
+import { Bounce, toast } from 'react-toastify';
+
 
 const ArticleForm = ({ onSubmit, initialData }) => {
   const { id } = useParams();
@@ -88,6 +90,11 @@ const ArticleForm = ({ onSubmit, initialData }) => {
         body: JSON.stringify(article),
       });
 
+      toast.success("Articulo Guardado Correctamente", {
+        position: "top-right",
+        theme: "colored"
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Error al guardar el artículo');
@@ -97,6 +104,12 @@ const ArticleForm = ({ onSubmit, initialData }) => {
       navigate('/admin/blog');
     } catch (error) {
       setMessage(`Error: ${error.message}`);
+
+      toast.error("Error al Guardar Articulo", {
+        position: "top-right",
+        theme: "colored"
+      });
+
     } finally {
       setLoading(false);
     }

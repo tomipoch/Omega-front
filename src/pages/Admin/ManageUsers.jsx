@@ -8,6 +8,7 @@ import {
   actualizarUsuarioAdmin, 
   actualizarRolUsuario 
 } from "../../services/usuariosService";
+import { Bounce, toast } from 'react-toastify';
 
 const ManageUsers = () => {
   const { token } = useContext(AuthContext);
@@ -85,9 +86,19 @@ const ManageUsers = () => {
       setUsers((prevUsers) =>
         prevUsers.filter((user) => user.usuario_id !== userToDelete)
       );
+
+      toast.success("Usuario Eliminado Correctamente", {
+        position: "top-right",
+        theme: "colored"
+      });
+
     } catch (err) {
       console.error("Error al eliminar usuario:", err);
       setError("Error al eliminar usuario.");
+      toast.error("Error al eliminar Usuario", {
+        position: "top-right",
+        theme: "colored"
+      });
     } finally {
       setShowModal(false);
     }
@@ -138,18 +149,27 @@ const ManageUsers = () => {
       // Actualizar el usuario en la lista local
       setUsers((prevUsers) =>
         prevUsers.map((user) =>
-          user.usuario_id === editingUser.usuario_id 
-            ? { ...user, ...response.usuario } 
+          user.usuario_id === editingUser.usuario_id
+            ? { ...user, ...response.usuario }
             : user
         )
       );
-
+      
+      toast.success("Datos del Usuario Actualizado Correctamente", {
+        position: "top-right",
+        theme: "colored"
+      });
+      
       setShowEditModal(false);
       setEditingUser(null);
       setError(null);
     } catch (err) {
       console.error("Error al actualizar usuario:", err);
       setError(err.message);
+      toast.error("Error al actulizar los datos del usuario", {
+        position: "top-right",
+        theme: "colored"
+      });
     }
   };
 
