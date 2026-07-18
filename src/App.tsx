@@ -3,78 +3,75 @@ import {
   Route,
   Routes,
   useLocation,
-} from "react-router-dom";
-import { AuthProvider } from "./services/authContext";
+} from 'react-router-dom';
+import { AuthProvider } from './services/authContext';
 
 // Componentes comunes
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import ProtectedRoute from "./services/ProtectedRoute";
+import Header from './components/Header';
+import Footer from './components/Footer';
+import ProtectedRoute from './services/ProtectedRoute';
 
-// Páginas principales
-import Home from "./pages/Comun/Home";
-import About from "./pages/Comun/About";
-import FAQ from "./pages/Comun/Faq";
-import NotFoundPage from "./pages/Comun/404";
-import SolicitudPersonalizacion from "./pages/Usuario/SolicitudPersonalizacion";
-import Catalogo from "./pages/Comun/Catalogo";
+// Páginas comunes
+import Home from './pages/Comun/Home';
+import About from './pages/Comun/About';
+import FAQ from './pages/Comun/Faq';
+import NotFoundPage from './pages/Comun/404';
+import Catalogo from './pages/Comun/Catalogo';
+import Blog from './pages/Comun/Blog';
+import ArticleDetail from './pages/Comun/ArticleDetail';
 
-// Páginas de autenticación
-import Login from "./pages/Usuario/Login";
-import Register from "./pages/Usuario/Register";
-import Solicitud from "./pages/Usuario/Solicitud";
-import Restablecer from "./pages/Usuario/Restablecer";
-import Profile from "./pages/Usuario/UserProfile";
-import ManageTestimonials from "./pages/Usuario/ManageTestimonials";
-import FormTestimonials from "./pages/Usuario/FormTestimonials";
-import ManageEvents from "./pages/Usuario/ManageEvents";
-import ManageCitasNew from "./pages/Usuario/ManageCitasNew";
-
-// Páginas del blog
-import Blog from "./pages/Comun/Blog";
-import ArticleDetail from "./pages/Comun/ArticleDetail";
+// Autenticación y usuario
+import Login from './pages/Usuario/Login';
+import Register from './pages/Usuario/Register';
+import Solicitud from './pages/Usuario/Solicitud';
+import Restablecer from './pages/Usuario/Restablecer';
+import Profile from './pages/Usuario/UserProfile';
+import ManageTestimonials from './pages/Usuario/ManageTestimonials';
+import FormTestimonials from './pages/Usuario/FormTestimonials';
+import ManageEvents from './pages/Usuario/ManageEvents';
+import ManageCitasNew from './pages/Usuario/ManageCitasNew';
+import SolicitudPersonalizacion from './pages/Usuario/SolicitudPersonalizacion';
 
 // Administración
-import AdminDashboard from "./pages/Admin/AdminDashboard";
-import ArticleForm from "./pages/Admin/ArticleForm";
-import ManageArticles from "./pages/Admin/ManageArticles";
-import ManageReseñas from "./pages/Admin/ManageReseñas";
-import ManageUsers from "./pages/Admin/ManageUsers";
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import ArticleForm from './pages/Admin/ArticleForm';
+import ManageArticles from './pages/Admin/ManageArticles';
+import ManageReseñas from './pages/Admin/ManageReseñas';
+import ManageUsers from './pages/Admin/ManageUsers';
+import ManageDisponibilidad from './pages/Admin/ManageDisponibilidad';
+import ManageServicios from './pages/Admin/ManageServicios';
+import ManageCitasAdmin from './pages/Admin/ManageCitasAdmin';
+import ManageEventsAdmin from './pages/Admin/ManageEventsAdmin';
+import EventForm from './pages/Admin/EventForm';
+import ProductosAdmin from './pages/Admin/ProductosAdmin';
 
-import ManageDisponibilidad from "./pages/Admin/ManageDisponibilidad";
-import ManageServicios from "./pages/Admin/ManageServicios";
+const HIDE_CHROME_ROUTES = new Set([
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+]);
 
-
-// Layout general
-function Layout({ children }) {
+function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-
-  const hideHeaderFooter = [
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
-  ].includes(location.pathname);
+  const hideChrome = HIDE_CHROME_ROUTES.has(location.pathname);
 
   return (
     <div className="flex flex-col min-h-screen">
-      {!hideHeaderFooter && <Header />}
-      <main className={`flex-grow ${!hideHeaderFooter ? "pt-20" : ""}`}>
-        {children}
-      </main>
-      {!hideHeaderFooter && <Footer />}
+      {!hideChrome && <Header />}
+      <main className={`flex-grow ${!hideChrome ? 'pt-20' : ''}`}>{children}</main>
+      {!hideChrome && <Footer />}
     </div>
   );
 }
 
-// Configuración principal de rutas
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Layout>
           <Routes>
-            {/* Rutas públicas */}
+            {/* Públicas */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/faq" element={<FAQ />} />
@@ -86,7 +83,7 @@ function App() {
             <Route path="/reset-password" element={<Restablecer />} />
             <Route path="/catalogo" element={<Catalogo />} />
 
-            {/* Rutas protegidas para usuarios autenticados */}
+            {/* Autenticadas (usuario o admin) */}
             <Route
               path="/profile"
               element={
@@ -119,10 +116,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/testimonials"
-              element={<ManageTestimonials />}
-            />
+            <Route path="/testimonials" element={<ManageTestimonials />} />
             <Route
               path="/testimonials/new"
               element={
@@ -132,7 +126,7 @@ function App() {
               }
             />
 
-            {/* Rutas para administradores */}
+            {/* Solo administradores */}
             <Route
               path="/admin"
               element={
@@ -158,10 +152,10 @@ function App() {
               }
             />
             <Route
-              path="/admin/services"
+              path="/admin/servicios"
               element={
                 <ProtectedRoute allowedRoles={[2]}>
-                  <ManageServices />
+                  <ManageServicios />
                 </ProtectedRoute>
               }
             />
@@ -182,7 +176,31 @@ function App() {
               }
             />
             <Route
+              path="/admin/blog/edit/:id"
+              element={
+                <ProtectedRoute allowedRoles={[2]}>
+                  <ArticleForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/events"
+              element={
+                <ProtectedRoute allowedRoles={[2]}>
+                  <ManageEventsAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/admin/events/new"
+              element={
+                <ProtectedRoute allowedRoles={[2]}>
+                  <EventForm />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/events/edit/:id"
               element={
                 <ProtectedRoute allowedRoles={[2]}>
                   <EventForm />
@@ -198,41 +216,22 @@ function App() {
               }
             />
             <Route
-              path="/admin/events"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageEventsAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/blog/edit/:id"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ArticleForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/admin/disponibilidad"
               element={
                 <ProtectedRoute allowedRoles={[2]}>
                   <ManageDisponibilidad />
-
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/admin/servicios"
+              path="/admin/productos"
               element={
                 <ProtectedRoute allowedRoles={[2]}>
-                  <ManageServicios />
-
+                  <ProductosAdmin />
                 </ProtectedRoute>
               }
             />
 
-            {/* Ruta 404 */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </Layout>

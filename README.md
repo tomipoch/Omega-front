@@ -1,41 +1,52 @@
-# Front-end Pagina Relojeria y Joyeria "OMEGA"
+# Front-end Relojería y Joyería OMEGA
 
-Este es un proyecto de una aplicación web para la **Relojería y Joyería OMEGA**, desarrollada utilizando **React**, **Tailwind CSS**, **Vite** y **React Router DOM**. La aplicación incluye funcionalidades como registro de usuarios, inicio de sesión y gestión de perfil de momento.
+SPA construida con **React 18**, **Vite**, **React Router** y **Tailwind CSS** que consume un backend Node/Express externo en `http://localhost:4000`.
 
 ## Características
 
-- **Registro e inicio de sesión** con manejo de autenticación vía **JWT**.
-- **Gestión de perfiles**: Los usuarios pueden actualizar su información personal y subir fotos de perfil, que pueden recortar utilizando una herramienta interactiva.
-- **Protección de rutas**: Algunas rutas están protegidas y solo accesibles para usuarios autenticados.
-- **Interfaz de usuario** desarrollada con **Tailwind CSS** para lograr un diseño responsivo y moderno.
-- **Manejo de imágenes** con capacidad de recortar las fotos de perfil antes de guardarlas.
-- **Estado global** utilizando **Context API** para manejo de autenticación y sesión de usuario.
-- **Conexion a Backend** con Node.js y Express, con base de datos para manejar usuarios y perfiles.
+- Catálogo, blog y eventos públicos.
+- Registro e inicio de sesión con JWT (almacenado en `sessionStorage`).
+- Perfil editable con recorte de imagen.
+- Solicitudes de personalización, citas y reseñas.
+- Panel de administración: usuarios, artículos, citas, disponibilidades, servicios, eventos, productos y reseñas.
 
-## Características por añadir
-- **Apartado de Citas**(CRUD user-admin)
-- **Apartado Blog**(CRUD user-admin)
-- **Seccion FAQ**
-- **Testimonios**
-- **Apartado Servicios**
+## Configuración
 
-## Tecnologías Utilizadas
+```bash
+cp .env.example .env       # ajusta VITE_API_URL si el backend está en otro host
+npm install
+npm run dev
+```
 
-- **Frontend**: React, Tailwind CSS, Vite, React Router DOM, react-icons
-- **Manejo de autenticación**: JWT (JSON Web Token)
-- **Subida de imágenes**: Multer
-- **Recorte de imágenes**: react-easy-crop
+## Variables de entorno
 
-#Uso
-## Características del Frontend
-- **Página principal:** Muestra información básica de la relojería y joyería.
-- **Registro:** Los usuarios pueden crear una cuenta ingresando sus datos personales.
-- **Inicio de sesión:** Los usuarios pueden iniciar sesión con su correo y contraseña.
-- **Gestión de perfil:** Los usuarios pueden actualizar su información personal y cambiar su foto de perfil utilizando un recortador de imágenes.
+| Variable        | Descripción                              |
+|-----------------|------------------------------------------|
+| `VITE_API_URL`  | URL base del backend (sin slash final).  |
 
-## Estado Global y Autenticación
-El estado de autenticación se maneja utilizando Context API. Cuando un usuario inicia sesión, se almacena su sesión (incluyendo el token JWT y los datos de perfil) en el sessionStorage. El token tiene una duración de 1 hora antes de que expire.
+## Scripts
 
-## Seguridad
-- **JSON Web Tokens (JWT):** Para manejar la autenticación y proteger las rutas.
-- **Validación de Formularios:** Se realiza validación tanto en el frontend como en el backend para asegurar la integridad de los datos.
+| Comando         | Descripción                       |
+|-----------------|-----------------------------------|
+| `npm run dev`   | Inicia el servidor de desarrollo.|
+| `npm run build` | Compila a `dist/`.                |
+| `npm run lint`  | Ejecuta ESLint.                   |
+| `npm run preview` | Sirve el build de producción.   |
+
+## Estructura
+
+```
+src/
+├── App.jsx             # Router y layout
+├── main.jsx            # Bootstrap React
+├── index.css           # Tailwind base
+├── components/         # UI reutilizable
+├── pages/
+│   ├── Admin/          # Vistas protegidas rol 2
+│   ├── Comun/          # Vistas públicas
+│   └── Usuario/        # Vistas protegidas rol 1/2
+├── services/           # Clientes HTTP y contextos
+└── utils/              # Utilidades (fechas, uploads, crop)
+```
+
+Las llamadas al backend pasan siempre por `src/services/apiClient.js`, que añade automáticamente el header `x-auth-token` cuando hay sesión activa.
