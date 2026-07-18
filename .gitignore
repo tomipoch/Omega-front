@@ -27,3 +27,6 @@ dist-ssr
 diagrag.mdj
 diagrama_de_clase.mdj
 diagrama_De_uso.mdj
+
+# TypeScript
+*.tsbuildinfo
