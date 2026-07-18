@@ -1,60 +1,72 @@
 import { useState, useEffect, useContext } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import SectionEditor from './SectionEditor';
 import { AuthContext } from '../../services/authContext';
+import { API_URL } from '../../services/apiClient';
+import type { BlogArticulo } from '../../types';
 
-const ArticleForm = ({ onSubmit, initialData }) => {
-  const { id } = useParams();
+interface Section {
+  subtitle: string;
+  content: string;
+}
+
+interface ArticleFormProps {
+  initialData?: BlogArticulo;
+}
+
+const ArticleForm = ({ initialData }: ArticleFormProps = {}) => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { token } = useContext(AuthContext);
+
   const [title, setTitle] = useState(initialData?.titulo || '');
   const [introduction, setIntroduction] = useState(initialData?.contenido || '');
-  const [sections, setSections] = useState(initialData?.secciones || []);
+  const [sections, setSections] = useState<Section[]>(
+    initialData?.secciones?.map((s) => ({ subtitle: s.subtitulo, content: s.contenido })) || [],
+  );
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (id && !initialData) {
-      const fetchArticle = async () => {
-        try {
-          const response = await fetch(`http://localhost:4000/blog/${id}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (!response.ok) throw new Error('Error al cargar el artículo');
-          const data = await response.json();
-
-          setTitle(data.titulo);
-          setIntroduction(data.contenido);
-          setSections(
-            data.secciones?.map((section) => ({
-              subtitle: section.subtitulo,
-              content: section.contenido,
-            })) || []
-          );
-        } catch (error) {
-          setMessage(`Error: ${error.message}`);
-        }
-      };
-      fetchArticle();
-    }
+    if (!id || initialData) return undefined;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/blog/${id}`, {
+          headers: token ? { 'x-auth-token': token } : {},
+        });
+        if (!res.ok) throw new Error('Error al cargar el artículo');
+        const data = (await res.json()) as BlogArticulo;
+        if (cancelled) return;
+        setTitle(data.titulo || '');
+        setIntroduction(data.contenido || '');
+        setSections(
+          data.secciones?.map((section) => ({
+            subtitle: section.subtitulo,
+            content: section.contenido,
+          })) || [],
+        );
+      } catch (err) {
+        if (!cancelled) setMessage(`Error: ${(err as Error).message}`);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id, initialData, token]);
 
-  const handleSectionChange = (index, updatedSection) => {
-    setSections((prev) =>
-      prev.map((section, i) => (i === index ? updatedSection : section))
-    );
-  };
+  const handleSectionChange = (index: number, updatedSection: Section) =>
+    setSections((prev) => prev.map((s, i) => (i === index ? updatedSection : s)));
 
-  const removeSection = (index) => {
+  const removeSection = (index: number) =>
     setSections((prev) => prev.filter((_, i) => i !== index));
+
+  const handleTextareaResize = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const target = e.currentTarget;
+    target.style.height = 'auto';
+    target.style.height = `${target.scrollHeight}px`;
   };
 
-  const handleTextareaResize = (e) => {
-    e.target.style.height = 'auto'; // restable la altura para calcular el nuevo scrollHeight
-    e.target.style.height = `${e.target.scrollHeight}px`;
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
@@ -63,11 +75,8 @@ const ArticleForm = ({ onSubmit, initialData }) => {
       titulo: title,
       contenido: introduction,
       secciones: sections
-        .filter((section) => section.subtitle.trim() && section.content.trim())
-        .map((section) => ({
-          subtitulo: section.subtitle,
-          contenido: section.content,
-        })),
+        .filter((s) => s.subtitle?.trim() && s.content?.trim())
+        .map((s) => ({ subtitulo: s.subtitle, contenido: s.content })),
     };
 
     if (!token) {
@@ -77,29 +86,25 @@ const ArticleForm = ({ onSubmit, initialData }) => {
     }
 
     try {
-      const method = id ? 'PUT' : 'POST';
-      const endpoint = id
-        ? `http://localhost:4000/blog/${id}`
-        : `http://localhost:4000/blog`;
-
-      const response = await fetch(endpoint, {
-        method,
+      const url = id ? `${API_URL}/blog/${id}` : `${API_URL}/blog`;
+      const res = await fetch(url, {
+        method: id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          'x-auth-token': token,
         },
         body: JSON.stringify(article),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al guardar el artículo');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(
+          (errorData as { message?: string }).message || 'Error al guardar el artículo',
+        );
       }
-
       setMessage('Artículo guardado con éxito');
       navigate('/admin/blog');
-    } catch (error) {
-      setMessage(`Error: ${error.message}`);
+    } catch (err) {
+      setMessage(`Error: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -118,14 +123,8 @@ const ArticleForm = ({ onSubmit, initialData }) => {
               ? 'bg-red-100 text-red-700 border border-red-300'
               : 'bg-green-100 text-green-700 border border-green-300'
           }`}
+          role="status"
         >
-          <span
-            className={`material-icons ${
-              message.includes('Error') ? 'text-red-500' : 'text-green-500'
-            } mr-2`}
-          >
-            {message.includes('Error') ? 'error' : 'check_circle'}
-          </span>
           {message}
         </div>
       )}
@@ -150,7 +149,7 @@ const ArticleForm = ({ onSubmit, initialData }) => {
               onChange={(e) => setIntroduction(e.target.value)}
               onInput={handleTextareaResize}
               className="mt-2 p-4 border border-gray-300 rounded-lg w-full focus:ring focus:ring-green-300 overflow-hidden resize-none"
-              rows="4"
+              rows={4}
               required
               style={{ minHeight: '100px' }}
             />
@@ -183,7 +182,7 @@ const ArticleForm = ({ onSubmit, initialData }) => {
                   }
                   onInput={handleTextareaResize}
                   className="mt-2 p-4 border border-gray-300 rounded-lg w-full focus:ring focus:ring-green-300 overflow-hidden resize-none"
-                  rows="4"
+                  rows={4}
                   required
                   style={{ minHeight: '100px' }}
                 />
@@ -192,19 +191,18 @@ const ArticleForm = ({ onSubmit, initialData }) => {
               <button
                 type="button"
                 onClick={() => removeSection(index)}
-                className="mt-4 bg-white border border-sgreen text-sgreen hover:bg-gray-200 rounded-2xl flex items-center px-4 py-2">
+                className="mt-4 bg-white border border-sgreen text-sgreen hover:bg-gray-200 rounded-2xl flex items-center px-4 py-2"
+              >
                 Eliminar Sección
               </button>
-
             </div>
           ))}
 
           <button
             type="button"
-            onClick={() =>
-              setSections([...sections, { subtitle: '', content: '' }])
-            }
-            className="bg-sgreen text-white py-2 px-4 border-2 border-green-500 rounded-2xl shadow-inner-green hover:shadow-inner-hgreen transition duration-300 ease-in-out">
+            onClick={() => setSections((prev) => [...prev, { subtitle: '', content: '' }])}
+            className="bg-sgreen text-white py-2 px-4 border-2 border-green-500 rounded-2xl shadow-inner-green hover:shadow-inner-hgreen transition"
+          >
             Agregar Sección
           </button>
         </div>
@@ -216,7 +214,7 @@ const ArticleForm = ({ onSubmit, initialData }) => {
             className={`py-2 px-4 rounded-2xl transition-all ${
               loading
                 ? 'bg-gray-400 text-gray-700 cursor-not-allowed'
-                : 'bg-white text-sgreen border border-gray-300'
+                : 'bg-white text-sgreen border border-gray-300 hover:bg-gray-100'
             }`}
           >
             {loading ? 'Guardando...' : id ? 'Actualizar Artículo' : 'Guardar Artículo'}
