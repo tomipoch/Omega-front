@@ -1,231 +1,165 @@
-import React, { useState, useEffect, useContext } from "react";
-import { AuthContext } from "../../services/authContext";
-import Modal from "../../components/Modal";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  obtenerTodosLosUsuarios, 
-  eliminarUsuario, 
-  actualizarUsuarioAdmin, 
-  actualizarRolUsuario 
-} from "../../services/usuariosService";
+import { useState, useEffect, useContext, useCallback } from 'react';
+import { AuthContext } from '../../services/authContext';
+import Modal from '../../components/Modal';
+import {
+  obtenerTodosLosUsuarios,
+  eliminarUsuario,
+  actualizarUsuarioAdmin,
+  type UsuarioFilters,
+  type Usuario,
+} from '../../services/usuariosService';
+import { extractList } from '../../services/apiClient';
+
+interface EditFormData {
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno: string;
+  correo_electronico: string;
+  telefono: string;
+  direccion: string;
+  rol_id: string;
+}
+
+const ROLE_NAMES: Record<number, string> = {
+  1: 'Usuario',
+  2: 'Administrador',
+};
+
+const ROLE_COLORS: Record<number, string> = {
+  1: 'bg-blue-100 text-blue-800',
+  2: 'bg-green-100 text-green-800',
+};
 
 const ManageUsers = () => {
   const { token } = useContext(AuthContext);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filters, setFilters] = useState({
-    name: "",
-    role: "all",
+  const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<{ name: string; role: 'all' | '1' | '2' }>({
+    name: '',
+    role: 'all',
   });
-
-  const [showModal, setShowModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  
-  // Nuevo estado para el formulario de edición completa
-  const [editFormData, setEditFormData] = useState({
-    nombre: "",
-    apellido_paterno: "",
-    apellido_materno: "",
-    correo_electronico: "",
-    telefono: "",
-    direccion: "",
-    rol_id: ""
+  const [editFormData, setEditFormData] = useState<EditFormData>({
+    nombre: '',
+    apellido_paterno: '',
+    apellido_materno: '',
+    correo_electronico: '',
+    telefono: '',
+    direccion: '',
+    rol_id: '',
   });
 
-  // Obtener usuarios desde la API
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     if (!token) {
-      setError("No se encontró un token de autenticación.");
+      setError('No se encontró un token de autenticación.');
+      setLoading(false);
       return;
     }
-
     setLoading(true);
-    setError(null);
-
     try {
-      const filterParams = {};
-      if (filters.name) filterParams.nombre = filters.name;
-      if (filters.role !== "all") filterParams.rol = filters.role;
-
-      const data = await obtenerTodosLosUsuarios(filterParams);
-      console.log('Usuarios obtenidos:', data);
-      setUsers(Array.isArray(data.data) ? data.data : []);
+      const params: UsuarioFilters = {};
+      if (filters.name) params.nombre = filters.name;
+      if (filters.role !== 'all') params.rol = filters.role;
+      const data = await obtenerTodosLosUsuarios(params);
+      setUsers(extractList<Usuario>(data));
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, filters]);
 
-  // Llamar a la API cuando se actualicen los filtros
   useEffect(() => {
     fetchUsers();
-  }, [filters]);
+  }, [fetchUsers]);
 
-  const handleFilterChange = (e) => {
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
   const confirmDelete = async () => {
-    if (!token || !userToDelete) {
-      setError("No se encontró un token de autenticación o usuario inválido.");
-      return;
-    }
-
+    if (!userToDelete) return;
     try {
       await eliminarUsuario(userToDelete);
-      // Eliminar el usuario de la lista localmente
-      setUsers((prevUsers) =>
-        prevUsers.filter((user) => user.usuario_id !== userToDelete)
-      );
+      setUsers((prev) => prev.filter((u) => u.usuario_id !== userToDelete));
     } catch (err) {
-      console.error("Error al eliminar usuario:", err);
-      setError("Error al eliminar usuario.");
+      setError((err as Error).message);
     } finally {
-      setShowModal(false);
+      setShowDeleteModal(false);
     }
   };
 
-  const requestDelete = (id) => {
+  const requestDelete = (id: number) => {
     setUserToDelete(id);
-    setShowModal(true);
+    setShowDeleteModal(true);
   };
 
-  // Función para abrir modal de edición completa
-  const handleEditUser = (user) => {
+  const handleEditUser = (user: Usuario) => {
     setEditingUser(user);
     setEditFormData({
-      nombre: user.nombre || "",
-      apellido_paterno: user.apellido_paterno || "",
-      apellido_materno: user.apellido_materno || "",
-      correo_electronico: user.correo_electronico || "",
-      telefono: user.telefono || "",
-      direccion: user.direccion || "",
-      rol_id: user.rol_id || ""
+      nombre: user.nombre || '',
+      apellido_paterno: user.apellido_paterno || '',
+      apellido_materno: user.apellido_materno || '',
+      correo_electronico: user.correo_electronico || '',
+      telefono: user.telefono || '',
+      direccion: user.direccion || '',
+      rol_id: user.rol_id != null ? String(user.rol_id) : '',
     });
     setShowEditModal(true);
   };
 
-  // Función para actualizar usuario completo
-  const handleUpdateUser = async (e) => {
+  const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-
     try {
-      // Filtrar solo los campos que han cambiado
-      const updatedFields = {};
-      Object.keys(editFormData).forEach(key => {
-        if (editFormData[key] !== (editingUser[key] || "")) {
-          updatedFields[key] = editFormData[key];
+      const updated: Record<string, unknown> = {};
+      Object.keys(editFormData).forEach((key) => {
+        const k = key as keyof EditFormData;
+        const incoming = editFormData[k];
+        const original = (editingUser as EditFormData)[k] ?? '';
+        if (incoming !== original) {
+          updated[key] = incoming;
         }
       });
 
-      if (Object.keys(updatedFields).length === 0) {
+      if (Object.keys(updated).length === 0) {
         setShowEditModal(false);
         setEditingUser(null);
         return;
       }
 
-      const response = await actualizarUsuarioAdmin(editingUser.usuario_id, updatedFields);
-      
-      // Actualizar el usuario en la lista local
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.usuario_id === editingUser.usuario_id 
-            ? { ...user, ...response.usuario } 
-            : user
-        )
+      const response = await actualizarUsuarioAdmin(editingUser.usuario_id, updated);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.usuario_id === editingUser.usuario_id
+            ? { ...u, ...((response as { usuario?: Usuario }).usuario || updated) }
+            : u,
+        ),
       );
-
       setShowEditModal(false);
       setEditingUser(null);
-      setError(null);
     } catch (err) {
-      console.error("Error al actualizar usuario:", err);
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
-  // Función para manejar cambios en el formulario de edición
-  const handleFormChange = (e) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setEditFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Función para obtener el nombre del rol
-  const getRoleName = (rolId) => {
-    const rol = parseInt(rolId);
-    switch (rol) {
-      case 1:
-        return "Usuario";
-      case 2:
-        return "Administrador";
-      default:
-        return "Rol desconocido"; // Se ha eliminado el "Sin rol"
-    }
-  };
-
-  // Función para obtener el color del badge del rol
-  const getRoleColor = (rolId) => {
-    const rol = parseInt(rolId);
-    switch (rol) {
-      case 1:
-        return "bg-blue-100 text-blue-800";
-      case 2:
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800"; // Se ha cambiado el color a gris para el "Rol desconocido"
-    }
-  };
-
-  // Función para editar rol de usuario
-  const handleEditRole = (user) => {
-    setEditingUser(user);
-    setShowEditModal(true);
-  };
-
-  // Función para actualizar el rol del usuario (función simplificada para compatibilidad)
-  const updateUserRole = async (userId, newRole) => {
-    if (!token) {
-      setError("No se encontró un token de autenticación.");
-      return;
-    }
-
-    try {
-      await actualizarRolUsuario(userId, newRole);
-      
-      // Actualizar el usuario en la lista local
-      setUsers((prevUsers) =>
-        prevUsers.map((user) =>
-          user.usuario_id === userId ? { ...user, rol_id: newRole } : user
-        )
-      );
-
-      setShowEditModal(false);
-      setEditingUser(null);
-    } catch (err) {
-      console.error("Error al actualizar rol:", err);
-      setError("Error al actualizar el rol del usuario.");
-    }
-  };
-
-  if (loading) {
-    return <div className="text-center mt-10">Cargando usuarios...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center text-red-500 mt-10">{error}</div>;
-  }
+  if (loading) return <div className="text-center mt-10">Cargando usuarios...</div>;
+  if (error)
+    return (
+      <div className="text-center text-red-500 mt-10" role="alert">
+        {error}
+      </div>
+    );
 
   return (
     <div className="max-w-6xl mx-auto p-4 font-ibm bg-white mt-8 mb-8">
@@ -250,6 +184,7 @@ const ManageUsers = () => {
           <option value="2">Administradores</option>
         </select>
       </div>
+
       <div className="overflow-x-auto rounded-2xl border border-gray-300">
         <table className="min-w-full table-auto border-collapse bg-white rounded-lg">
           <thead>
@@ -265,13 +200,8 @@ const ManageUsers = () => {
           <tbody>
             {users.length > 0 ? (
               users.map((user) => (
-                <tr
-                  key={user.usuario_id}
-                  className="hover:bg-gray-50 border-b border-gray-300"
-                >
-                  <td className="px-6 py-3 text-gray-800 font-medium">
-                    #{user.usuario_id}
-                  </td>
+                <tr key={user.usuario_id} className="hover:bg-gray-50 border-b border-gray-300">
+                  <td className="px-6 py-3 text-gray-800 font-medium">#{user.usuario_id}</td>
                   <td className="px-6 py-3 text-gray-800">
                     <div className="flex flex-col">
                       <span className="font-medium">
@@ -286,19 +216,13 @@ const ManageUsers = () => {
                     </div>
                   </td>
                   <td className="px-6 py-3 text-gray-600">
-                    <a 
-                      href={`mailto:${user.correo_electronico}`}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
+                    <a href={`mailto:${user.correo_electronico}`} className="text-blue-600 hover:text-blue-800">
                       {user.correo_electronico}
                     </a>
                   </td>
                   <td className="px-6 py-3 text-gray-600">
                     {user.telefono ? (
-                      <a 
-                        href={`tel:${user.telefono}`}
-                        className="text-green-600 hover:text-green-800"
-                      >
+                      <a href={`tel:${user.telefono}`} className="text-green-600 hover:text-green-800">
                         {user.telefono}
                       </a>
                     ) : (
@@ -306,23 +230,27 @@ const ManageUsers = () => {
                     )}
                   </td>
                   <td className="px-6 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.rol_id)}`}>
-                      {getRoleName(user.rol_id)}
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        ROLE_COLORS[Number(user.rol_id)] || 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {ROLE_NAMES[Number(user.rol_id)] || 'Rol desconocido'}
                     </span>
                   </td>
                   <td className="px-6 py-3">
                     <div className="flex space-x-2">
                       <button
+                        type="button"
                         onClick={() => handleEditUser(user)}
-                        className="bg-green-500 text-white py-1 px-3 text-sm rounded-lg hover:bg-green-600 transition duration-300"
-                        aria-label={`Editar usuario ${user.nombre}`}
+                        className="bg-green-500 text-white py-1 px-3 text-sm rounded-lg hover:bg-green-600 transition"
                       >
                         Editar
                       </button>
                       <button
+                        type="button"
                         onClick={() => requestDelete(user.usuario_id)}
-                        className="bg-red-500 text-white py-1 px-3 text-sm rounded-lg hover:bg-red-600 transition duration-300"
-                        aria-label={`Eliminar usuario ${user.nombre}`}
+                        className="bg-red-500 text-white py-1 px-3 text-sm rounded-lg hover:bg-red-600 transition"
                       >
                         Eliminar
                       </button>
@@ -332,10 +260,7 @@ const ManageUsers = () => {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan="6"
-                  className="text-center py-6 text-gray-600 font-medium border-b border-gray-300"
-                >
+                <td colSpan={6} className="text-center py-6 text-gray-600 font-medium">
                   No hay usuarios disponibles.
                 </td>
               </tr>
@@ -344,23 +269,20 @@ const ManageUsers = () => {
         </table>
       </div>
 
-      {/* Modal para editar usuario completo */}
       {showEditModal && editingUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-2xl shadow-lg max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
             <h3 className="text-xl font-semibold text-gray-800 mb-6">
               Editar Usuario: {editingUser.nombre} {editingUser.apellido_paterno}
             </h3>
-            
             <form onSubmit={handleUpdateUser} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Nombre */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-nombre" className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre *
                   </label>
                   <input
-                    type="text"
+                    id="edit-nombre"
                     name="nombre"
                     value={editFormData.nombre}
                     onChange={handleFormChange}
@@ -368,41 +290,36 @@ const ManageUsers = () => {
                     required
                   />
                 </div>
-
-                {/* Apellido Paterno */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-apellido_paterno" className="block text-sm font-medium text-gray-700 mb-2">
                     Apellido Paterno
                   </label>
                   <input
-                    type="text"
+                    id="edit-apellido_paterno"
                     name="apellido_paterno"
                     value={editFormData.apellido_paterno}
                     onChange={handleFormChange}
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
-
-                {/* Apellido Materno */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-apellido_materno" className="block text-sm font-medium text-gray-700 mb-2">
                     Apellido Materno
                   </label>
                   <input
-                    type="text"
+                    id="edit-apellido_materno"
                     name="apellido_materno"
                     value={editFormData.apellido_materno}
                     onChange={handleFormChange}
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
-
-                {/* Correo Electrónico */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-correo_electronico" className="block text-sm font-medium text-gray-700 mb-2">
                     Correo Electrónico *
                   </label>
                   <input
+                    id="edit-correo_electronico"
                     type="email"
                     name="correo_electronico"
                     value={editFormData.correo_electronico}
@@ -411,13 +328,12 @@ const ManageUsers = () => {
                     required
                   />
                 </div>
-
-                {/* Teléfono */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-telefono" className="block text-sm font-medium text-gray-700 mb-2">
                     Teléfono
                   </label>
                   <input
+                    id="edit-telefono"
                     type="tel"
                     name="telefono"
                     value={editFormData.telefono}
@@ -425,13 +341,12 @@ const ManageUsers = () => {
                     className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   />
                 </div>
-
-                {/* Rol */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="edit-rol_id" className="block text-sm font-medium text-gray-700 mb-2">
                     Rol
                   </label>
                   <select
+                    id="edit-rol_id"
                     name="rol_id"
                     value={editFormData.rol_id}
                     onChange={handleFormChange}
@@ -442,23 +357,19 @@ const ManageUsers = () => {
                   </select>
                 </div>
               </div>
-
-              {/* Dirección */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="edit-direccion" className="block text-sm font-medium text-gray-700 mb-2">
                   Dirección
                 </label>
                 <textarea
+                  id="edit-direccion"
                   name="direccion"
                   value={editFormData.direccion}
                   onChange={handleFormChange}
                   rows={3}
                   className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="Dirección completa del usuario"
                 />
               </div>
-
-              {/* Botones */}
               <div className="flex justify-end space-x-4 pt-4">
                 <button
                   type="button"
@@ -466,14 +377,11 @@ const ManageUsers = () => {
                     setShowEditModal(false);
                     setEditingUser(null);
                   }}
-                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition duration-300"
+                  className="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition"
                 >
                   Cancelar
                 </button>
-                <button
-                  type="submit"
-                  className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition duration-300"
-                >
+                <button type="submit" className="bg-green-500 text-white py-2 px-4 rounded-lg hover:bg-green-600 transition">
                   Guardar Cambios
                 </button>
               </div>
@@ -482,12 +390,10 @@ const ManageUsers = () => {
         </div>
       )}
 
-      {/* Modal para eliminar usuario */}
       <Modal
-        showModal={showModal}
-        toggleModal={() => setShowModal(false)}
+        showModal={showDeleteModal}
+        toggleModal={() => setShowDeleteModal(false)}
         onConfirm={confirmDelete}
-        loading={false}
         title="Eliminar Usuario"
         message="¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer."
         confirmText="Eliminar"
