@@ -1,5 +1,6 @@
 import { FaFacebook, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { ICON_SIZES } from './icons';
 
 const Footer = () => (
   <footer className="bg-sgreen text-white py-10 font-ibm">
@@ -9,13 +10,13 @@ const Footer = () => (
           <img src="/vite.svg" alt="Logotipo de OMEGA" className="w-40 h-auto mb-6" />
           <address className="flex space-x-6 justify-center md:justify-start not-italic">
             <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-              <FaFacebook size={40} className="hover:text-bgreen transition-colors duration-300" />
+              <FaFacebook size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
             </a>
             <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-              <FaInstagram size={40} className="hover:text-bgreen transition-colors duration-300" />
+              <FaInstagram size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
             </a>
             <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <FaLinkedin size={40} className="hover:text-bgreen transition-colors duration-300" />
+              <FaLinkedin size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
             </a>
           </address>
         </section>

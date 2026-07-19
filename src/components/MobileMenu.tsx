@@ -1,22 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { FaAngleDown } from 'react-icons/fa';
+import { ROUTES } from '../constants/routes';
 
 interface MobileMenuProps {
   isMobileMenuOpen: boolean;
-  toggleMobileMenu: () => void;
+  closeMobileMenu: () => void;
 }
 
-const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => {
+const MobileMenu = ({ isMobileMenuOpen, closeMobileMenu }: MobileMenuProps) => {
   const [isServiciosOpen, setIsServiciosOpen] = useState(false);
   const [isOtrosOpen, setIsOtrosOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const closeMenus = useCallback(() => {
+  const handleClose = useCallback(() => {
     setIsServiciosOpen(false);
     setIsOtrosOpen(false);
-    toggleMobileMenu();
-  }, [toggleMobileMenu]);
+    closeMobileMenu();
+  }, [closeMobileMenu]);
 
   const toggleDropdown = (dropdown: 'servicios' | 'otros') => {
     if (dropdown === 'servicios') {
@@ -32,11 +33,11 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
     if (!isMobileMenuOpen) return undefined;
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        closeMenus();
+        handleClose();
       }
     };
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeMenus();
+      if (e.key === 'Escape') handleClose();
     };
     document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('keydown', handleEscape);
@@ -44,7 +45,7 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleEscape);
     };
-  }, [isMobileMenuOpen, closeMenus]);
+  }, [isMobileMenuOpen, handleClose]);
 
   if (!isMobileMenuOpen) return null;
 
@@ -57,10 +58,10 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
       aria-label="Menú móvil"
     >
       <nav className="flex flex-col space-y-2 py-4 text-center border-b-2 border-gray-200">
-        <Link to="/" className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={closeMenus}>
+        <Link to={ROUTES.HOME} className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={handleClose}>
           Inicio
         </Link>
-        <Link to="/citas" className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={closeMenus}>
+        <Link to={ROUTES.APPOINTMENTS} className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={handleClose}>
           Citas
         </Link>
 
@@ -78,12 +79,12 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
           {isServiciosOpen && (
             <ul id="mobile-servicios-menu" className="flex flex-col bg-gray-100 border-t border-gray-300 space-y-1">
               <li>
-                <Link to="/solicitud-personalizacion" className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={closeMenus}>
+                <Link to={ROUTES.CUSTOM_REQUEST} className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={handleClose}>
                   Personalización
                 </Link>
               </li>
               <li>
-                <Link to="/events" className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={closeMenus}>
+                <Link to={ROUTES.EVENTS} className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={handleClose}>
                   Eventos
                 </Link>
               </li>
@@ -105,17 +106,17 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
           {isOtrosOpen && (
             <ul id="mobile-otros-menu" className="flex flex-col bg-gray-100 border-t border-gray-300 space-y-1">
               <li>
-                <Link to="/testimonials" className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={closeMenus}>
+                <Link to={ROUTES.TESTIMONIALS} className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={handleClose}>
                   Reseñas
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={closeMenus}>
+                <Link to={ROUTES.FAQ} className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={handleClose}>
                   FAQ
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={closeMenus}>
+                <Link to={ROUTES.BLOG} className="text-sgreen py-2 px-4 hover:bg-gray-200 transition" onClick={handleClose}>
                   Blog
                 </Link>
               </li>
@@ -123,7 +124,7 @@ const MobileMenu = ({ isMobileMenuOpen, toggleMobileMenu }: MobileMenuProps) => 
           )}
         </div>
 
-        <Link to="/about" className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={closeMenus}>
+        <Link to={ROUTES.ABOUT} className="text-sgreen hover:bg-gray-200 py-2 rounded transition" onClick={handleClose}>
           Quiénes Somos
         </Link>
       </nav>

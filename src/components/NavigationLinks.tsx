@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { NavLink } from 'react-router-dom';
 import { FaAngleDown } from 'react-icons/fa';
 import { useUser } from '../hooks/useUser';
-import { ADMIN_ROL } from '../types';
+import { isAdmin } from '../constants/roles';
+import { ROUTES } from '../constants/routes';
 
 const baseLinkClass = ({ isActive }: { isActive: boolean }): string =>
   `hover:text-sgreen transition duration-300${isActive ? ' font-bold text-sgreen' : ''}`;
@@ -10,7 +11,7 @@ const baseLinkClass = ({ isActive }: { isActive: boolean }): string =>
 const NavigationLinks = () => {
   const { user } = useUser();
   const homeRoute = useMemo(
-    () => (Number(user?.rol_id) === ADMIN_ROL ? '/admin' : '/'),
+    () => (isAdmin(user?.rol_id) ? ROUTES.ADMIN : ROUTES.HOME),
     [user],
   );
 
@@ -19,10 +20,10 @@ const NavigationLinks = () => {
       <NavLink to={homeRoute} className={baseLinkClass}>
         Inicio
       </NavLink>
-      <NavLink to="/citas" className={baseLinkClass}>
+      <NavLink to={ROUTES.APPOINTMENTS} className={baseLinkClass}>
         Citas
       </NavLink>
-      <NavLink to="/catalogo" className={baseLinkClass}>
+      <NavLink to={ROUTES.CATALOG} className={baseLinkClass}>
         Catálogo
       </NavLink>
 
@@ -41,7 +42,7 @@ const NavigationLinks = () => {
         >
           <li>
             <NavLink
-              to="/solicitud-personalizacion"
+              to={ROUTES.CUSTOM_REQUEST}
               className="block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-sgreen"
               role="menuitem"
             >
@@ -50,7 +51,7 @@ const NavigationLinks = () => {
           </li>
           <li>
             <NavLink
-              to="/events"
+              to={ROUTES.EVENTS}
               className="block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-sgreen"
               role="menuitem"
             >
@@ -75,7 +76,7 @@ const NavigationLinks = () => {
         >
           <li>
             <NavLink
-              to="/testimonials"
+              to={ROUTES.TESTIMONIALS}
               className="block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-sgreen"
               role="menuitem"
             >
@@ -84,7 +85,7 @@ const NavigationLinks = () => {
           </li>
           <li>
             <NavLink
-              to="/faq"
+              to={ROUTES.FAQ}
               className="block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-sgreen"
               role="menuitem"
             >
@@ -93,7 +94,7 @@ const NavigationLinks = () => {
           </li>
           <li>
             <NavLink
-              to="/blog"
+              to={ROUTES.BLOG}
               className="block px-4 py-2 text-gray-700 hover:bg-gray-200 hover:text-sgreen"
               role="menuitem"
             >
@@ -103,7 +104,7 @@ const NavigationLinks = () => {
         </ul>
       </div>
 
-      <NavLink to="/about" className={`${baseLinkClass} whitespace-nowrap`}>
+      <NavLink to={ROUTES.ABOUT} className={`${baseLinkClass} whitespace-nowrap`}>
         Quiénes Somos
       </NavLink>
     </>

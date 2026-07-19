@@ -1,56 +1,45 @@
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-} from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './services/authContext';
+import { queryClient } from './services/queryClient';
+import { AdminRoute } from './services/RoleRoute';
+import { ConfirmProvider } from './hooks/useConfirm';
+import { HIDE_CHROME_ROUTES, ROUTES } from './constants/routes';
 
-// Componentes comunes
 import Header from './components/Header';
 import Footer from './components/Footer';
-import ProtectedRoute from './services/ProtectedRoute';
 
-// Páginas comunes
-import Home from './pages/Comun/Home';
-import About from './pages/Comun/About';
-import FAQ from './pages/Comun/Faq';
-import NotFoundPage from './pages/Comun/404';
-import Catalogo from './pages/Comun/Catalogo';
-import Blog from './pages/Comun/Blog';
-import ArticleDetail from './pages/Comun/ArticleDetail';
+import Home from './pages/public/Home';
+import About from './pages/public/About';
+import Faq from './pages/public/Faq';
+import NotFoundPage from './pages/public/NotFound';
+import Catalog from './pages/public/Catalog';
+import Blog from './pages/public/Blog';
+import ArticleDetail from './pages/public/ArticleDetail';
 
-// Autenticación y usuario
-import Login from './pages/Usuario/Login';
-import Register from './pages/Usuario/Register';
-import Solicitud from './pages/Usuario/Solicitud';
-import Restablecer from './pages/Usuario/Restablecer';
-import Profile from './pages/Usuario/UserProfile';
-import ManageTestimonials from './pages/Usuario/ManageTestimonials';
-import FormTestimonials from './pages/Usuario/FormTestimonials';
-import ManageEvents from './pages/Usuario/ManageEvents';
-import ManageCitasNew from './pages/Usuario/ManageCitasNew';
-import SolicitudPersonalizacion from './pages/Usuario/SolicitudPersonalizacion';
+import Login from './pages/auth/Login';
+import Register from './pages/auth/Register';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
-// Administración
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import ArticleForm from './pages/Admin/ArticleForm';
-import ManageArticles from './pages/Admin/ManageArticles';
-import ManageReseñas from './pages/Admin/ManageReseñas';
-import ManageUsers from './pages/Admin/ManageUsers';
-import ManageDisponibilidad from './pages/Admin/ManageDisponibilidad';
-import ManageServicios from './pages/Admin/ManageServicios';
-import ManageCitasAdmin from './pages/Admin/ManageCitasAdmin';
-import ManageEventsAdmin from './pages/Admin/ManageEventsAdmin';
-import EventForm from './pages/Admin/EventForm';
-import ProductosAdmin from './pages/Admin/ProductosAdmin';
+import Profile from './pages/user/Profile';
+import ManageAppointments from './pages/user/ManageAppointments';
+import ManageEvents from './pages/user/ManageEvents';
+import CustomRequest from './pages/user/CustomRequest';
+import ManageTestimonials from './pages/user/ManageTestimonials';
+import TestimonialForm from './pages/user/TestimonialForm';
 
-const HIDE_CHROME_ROUTES = new Set([
-  '/login',
-  '/register',
-  '/forgot-password',
-  '/reset-password',
-]);
+import AdminDashboard from './pages/admin/AdminDashboard';
+import ManageUsers from './pages/admin/ManageUsers';
+import ManageReviews from './pages/admin/ManageReviews';
+import ManageServices from './pages/admin/ManageServices';
+import ManageAvailability from './pages/admin/ManageAvailability';
+import ManageAppointmentsAdmin from './pages/admin/ManageAppointmentsAdmin';
+import ManageEventsAdmin from './pages/admin/ManageEventsAdmin';
+import EventForm from './pages/admin/EventForm';
+import ManageArticles from './pages/admin/ManageArticles';
+import ArticleForm from './pages/admin/ArticleForm';
+import ProductsAdmin from './pages/admin/ProductsAdmin';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -67,176 +56,180 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Layout>
-          <Routes>
-            {/* Públicas */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:id" element={<ArticleDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<Solicitud />} />
-            <Route path="/reset-password" element={<Restablecer />} />
-            <Route path="/catalogo" element={<Catalogo />} />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ConfirmProvider>
+        <Router>
+          <Layout>
+            <Routes>
+              {/* Public */}
+              <Route path={ROUTES.HOME} element={<Home />} />
+              <Route path={ROUTES.ABOUT} element={<About />} />
+              <Route path={ROUTES.FAQ} element={<Faq />} />
+              <Route path={ROUTES.BLOG} element={<Blog />} />
+              <Route path={ROUTES.BLOG_DETAIL()} element={<ArticleDetail />} />
+              <Route path={ROUTES.LOGIN} element={<Login />} />
+              <Route path={ROUTES.REGISTER} element={<Register />} />
+              <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPassword />} />
+              <Route path={ROUTES.RESET_PASSWORD} element={<ResetPassword />} />
+              <Route path={ROUTES.CATALOG} element={<Catalog />} />
 
-            {/* Autenticadas (usuario o admin) */}
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute allowedRoles={[1, 2]}>
-                  <Profile />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/citas"
-              element={
-                <ProtectedRoute allowedRoles={[1, 2]}>
-                  <ManageCitasNew />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/events"
-              element={
-                <ProtectedRoute allowedRoles={[1, 2]}>
-                  <ManageEvents />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/solicitud-personalizacion"
-              element={
-                <ProtectedRoute allowedRoles={[1, 2]}>
-                  <SolicitudPersonalizacion />
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/testimonials" element={<ManageTestimonials />} />
-            <Route
-              path="/testimonials/new"
-              element={
-                <ProtectedRoute allowedRoles={[1, 2]}>
-                  <FormTestimonials />
-                </ProtectedRoute>
-              }
-            />
+              {/* Authenticated (user or admin) */}
+              <Route
+                path={ROUTES.PROFILE}
+                element={
+                  <AdminRoute allowedRoles={[1, 2]}>
+                    <Profile />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.APPOINTMENTS}
+                element={
+                  <AdminRoute allowedRoles={[1, 2]}>
+                    <ManageAppointments />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.EVENTS}
+                element={
+                  <AdminRoute allowedRoles={[1, 2]}>
+                    <ManageEvents />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.CUSTOM_REQUEST}
+                element={
+                  <AdminRoute allowedRoles={[1, 2]}>
+                    <CustomRequest />
+                  </AdminRoute>
+                }
+              />
+              <Route path={ROUTES.TESTIMONIALS} element={<ManageTestimonials />} />
+              <Route
+                path={ROUTES.TESTIMONIALS_NEW}
+                element={
+                  <AdminRoute allowedRoles={[1, 2]}>
+                    <TestimonialForm />
+                  </AdminRoute>
+                }
+              />
 
-            {/* Solo administradores */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <AdminDashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageUsers />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/reviews"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageReseñas />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/servicios"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageServicios />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/blog"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageArticles />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/blog/new"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ArticleForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/blog/edit/:id"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ArticleForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageEventsAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events/new"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <EventForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/events/edit/:id"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <EventForm />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/appointments"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageCitasAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/disponibilidad"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ManageDisponibilidad />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/productos"
-              element={
-                <ProtectedRoute allowedRoles={[2]}>
-                  <ProductosAdmin />
-                </ProtectedRoute>
-              }
-            />
+              {/* Admin only */}
+              <Route
+                path={ROUTES.ADMIN}
+                element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_USERS}
+                element={
+                  <AdminRoute>
+                    <ManageUsers />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_REVIEWS}
+                element={
+                  <AdminRoute>
+                    <ManageReviews />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_SERVICES}
+                element={
+                  <AdminRoute>
+                    <ManageServices />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_BLOG}
+                element={
+                  <AdminRoute>
+                    <ManageArticles />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_BLOG_NEW}
+                element={
+                  <AdminRoute>
+                    <ArticleForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_BLOG_EDIT()}
+                element={
+                  <AdminRoute>
+                    <ArticleForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_EVENTS}
+                element={
+                  <AdminRoute>
+                    <ManageEventsAdmin />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_EVENTS_NEW}
+                element={
+                  <AdminRoute>
+                    <EventForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_EVENTS_EDIT()}
+                element={
+                  <AdminRoute>
+                    <EventForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_APPOINTMENTS}
+                element={
+                  <AdminRoute>
+                    <ManageAppointmentsAdmin />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_AVAILABILITY}
+                element={
+                  <AdminRoute>
+                    <ManageAvailability />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path={ROUTES.ADMIN_PRODUCTS}
+                element={
+                  <AdminRoute>
+                    <ProductsAdmin />
+                  </AdminRoute>
+                }
+              />
 
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Layout>
-      </Router>
-    </AuthProvider>
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Layout>
+        </Router>
+        </ConfirmProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

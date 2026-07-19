@@ -1,30 +1,35 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../services/authContext';
+import { useUser } from '../hooks/useUser';
+import { HIDE_CHROME_ROUTES, ROUTES } from '../constants/routes';
 import NavigationLinks from './NavigationLinks';
 import UserMenu from './UserMenu';
 import MobileMenu from './MobileMenu';
 import { FaBars } from 'react-icons/fa';
-
-const HIDE_CHROME_ROUTES = new Set(['/login', '/register', '/forgot-password', '/reset-password']);
+import { ICON_SIZES } from './icons';
+import { useLocation } from 'react-router-dom';
 
 const Header = () => {
-  const context = useContext(AuthContext);
+  const { user, logoutUser } = useUser();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => setIsMobileMenuOpen((v) => !v);
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   const handleLogout = () => {
-    context?.logoutUser();
-    navigate('/');
+    logoutUser();
+    navigate(ROUTES.HOME);
   };
+
+  const hideAuthLinks = HIDE_CHROME_ROUTES.has(location.pathname);
 
   return (
     <header className="bg-white/70 backdrop-blur-lg font-ibm fixed top-0 left-0 w-full z-50 h-20">
       <div className="container mx-auto flex justify-between items-center h-full px-4">
         <div className="w-1/3 flex justify-start">
-          <Link to="/" aria-label="Inicio">
+          <Link to={ROUTES.HOME} aria-label="Inicio">
             <img src="/vite.svg" alt="Logo" className="w-32 h-auto" />
           </Link>
         </div>
@@ -37,19 +42,19 @@ const Header = () => {
 
         <div className="flex items-center space-x-4 ml-auto">
           <div className="hidden md:flex">
-            {context?.user ? (
-              <UserMenu user={context.user} handleLogout={handleLogout} />
+            {user ? (
+              <UserMenu user={user} handleLogout={handleLogout} />
             ) : (
-              !HIDE_CHROME_ROUTES.has(window.location.pathname) && (
+              !hideAuthLinks && (
                 <>
                   <Link
-                    to="/login"
+                    to={ROUTES.LOGIN}
                     className="text-gray-700 py-2 px-2 rounded-2xl hover:border-sgreen hover:text-sgreen transition"
                   >
                     Iniciar sesión
                   </Link>
                   <Link
-                    to="/register"
+                    to={ROUTES.REGISTER}
                     className="bg-sgreen text-white py-2 px-4 border-2 border-green-500 rounded-2xl shadow-inner-green hover:shadow-inner-hgreen transition duration-300 ease-in-out"
                   >
                     Registrarse
@@ -66,14 +71,14 @@ const Header = () => {
             aria-label="Abrir menú"
             aria-expanded={isMobileMenuOpen}
           >
-            <FaBars size={24} />
+            <FaBars size={ICON_SIZES.md} />
           </button>
         </div>
       </div>
 
       <MobileMenu
         isMobileMenuOpen={isMobileMenuOpen}
-        toggleMobileMenu={toggleMobileMenu}
+        closeMobileMenu={closeMobileMenu}
       />
     </header>
   );
