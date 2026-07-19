@@ -1,6 +1,8 @@
 import { type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useUser } from '../hooks/useUser';
+import { hasRole } from '../constants/roles';
+import { ROUTES } from '../constants/routes';
 import type { Rol } from '../types';
 
 interface ProtectedRouteProps {
@@ -21,11 +23,11 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to={ROUTES.LOGIN} replace state={{ from: location }} />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(Number(user.rol_id) as Rol)) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles && !hasRole(user.rol_id, allowedRoles)) {
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return <>{children}</>;

@@ -1,14 +1,13 @@
-import { apiFetch } from './apiClient';
-import type { AuthUser, LoginCredentials, RegisterPayload } from '../types';
+import { apiPost } from './apiClient';
+import { LoginResponseSchema } from '../schemas/auth';
+import type { AuthUser, LoginCredentials } from '../types';
 
-const TOKEN_KEY = 'token';
-const USER_KEY = 'user';
-
-export const getToken = (): string | null => sessionStorage.getItem(TOKEN_KEY);
+export { getToken } from './authStorage';
 
 export const getStoredUser = (): AuthUser | null => {
+  if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(USER_KEY);
+    const raw = window.sessionStorage.getItem('user');
     return raw ? (JSON.parse(raw) as AuthUser) : null;
   } catch {
     return null;
@@ -16,47 +15,28 @@ export const getStoredUser = (): AuthUser | null => {
 };
 
 export const persistAuth = (user: AuthUser, token: string): void => {
-  if (token) sessionStorage.setItem(TOKEN_KEY, token);
-  if (user) sessionStorage.setItem(USER_KEY, JSON.stringify(user));
+  if (typeof window === 'undefined') return;
+  if (token) window.sessionStorage.setItem('token', token);
+  if (user) {
+    const { token: _token, ...safeUser } = user;
+    void _token;
+    window.sessionStorage.setItem('user', JSON.stringify(safeUser));
+  }
 };
 
 export const clearAuth = (): void => {
-  sessionStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(USER_KEY);
+  if (typeof window === 'undefined') return;
+  window.sessionStorage.removeItem('token');
+  window.sessionStorage.removeItem('user');
 };
 
 export const register = (formData: FormData): Promise<unknown> =>
-  apiFetch('/usuarios/register', { method: 'POST', body: formData, isForm: true });
+  apiPost('/usuarios/register', formData, { isForm: true, skipAuth: true });
 
-export const login = (credentials: LoginCredentials): Promise<AuthUser> =>
-  apiFetch<AuthUser>('/usuarios/login', { method: 'POST', body: credentials });
+export const login = async (credentials: LoginCredentials): Promise<AuthUser> => {
+  const raw = await apiPost<unknown>('/usuarios/login', credentials, { skipAuth: true });
+  return LoginResponseSchema.parse(raw);
+};
 
-export interface ProfileResponse {
-  usuario_id: number;
-  nombre: string;
-  apellido_paterno?: string;
-  apellido_materno?: string;
-  correo_electronico: string;
-  telefono?: string;
-  direccion?: string;
-  foto_perfil_url?: string | null;
-  rol_id: number;
-  token?: string;
-}
-
-export const getProfile = (): Promise<ProfileResponse> =>
-  apiFetch<ProfileResponse>('/usuarios/perfil', { token: getToken() });
-
-export const updateProfile = (
-  profileData: FormData | RegisterPayload | Record<string, unknown>,
-  { isForm = false }: { isForm?: boolean } = {},
-): Promise<unknown> =>
-  apiFetch('/usuarios/perfil', {
-    method: 'PUT',
-    body: profileData,
-    token: getToken(),
-    isForm,
-  });
-
-export const deleteAccount = (): Promise<unknown> =>
-  apiFetch('/usuarios/eliminar', { method: 'DELETE', token: getToken() });
+export type { ProfileResponse } from './profileService';
+export { getProfile, updateProfile, deleteAccount } from './profileService';

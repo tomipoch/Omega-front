@@ -1,6 +1,19 @@
-import { createContext, useState, useEffect, useMemo, useCallback, type ReactNode } from 'react';
-import type { AuthUser, AuthContextValue } from '../types';
-import { getStoredUser, getToken, persistAuth, clearAuth } from './authService';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
+import type { AuthContextValue, AuthUser } from '../types';
+import {
+  clearAuth as clearPersistedAuth,
+  getStoredUser,
+  persistAuth,
+} from './authService';
+import { clearToken, getToken } from './authStorage';
+import { UNAUTHORIZED_EVENT } from './apiClient';
 
 const MISSING_PROVIDER_MESSAGE =
   'AuthContext: useContext invocado fuera de <AuthProvider>. Envuelve la app con <AuthProvider>.';
@@ -37,6 +50,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setIsLoading(false);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleUnauthorized = () => {
+      clearPersistedAuth();
+      clearToken();
+      setUser(null);
+      setToken(null);
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, []);
+
   const loginUser = useCallback((userData: AuthUser): void => {
     const tokenValue = userData?.token;
     if (!tokenValue) {
@@ -49,7 +74,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const logoutUser = useCallback((): void => {
-    clearAuth();
+    clearPersistedAuth();
+    clearToken();
     setUser(null);
     setToken(null);
   }, []);

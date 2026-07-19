@@ -1,0 +1,40 @@
+export const ROUTES = {
+  HOME: '/',
+  ABOUT: '/about',
+  FAQ: '/faq',
+  BLOG: '/blog',
+  BLOG_DETAIL: (id: number | string = ':id') => `/blog/${id}`,
+  CATALOG: '/catalogo',
+  LOGIN: '/login',
+  REGISTER: '/register',
+  FORGOT_PASSWORD: '/forgot-password',
+  RESET_PASSWORD: '/reset-password',
+  PROFILE: '/profile',
+  APPOINTMENTS: '/citas',
+  EVENTS: '/events',
+  CUSTOM_REQUEST: '/solicitud-personalizacion',
+  TESTIMONIALS: '/testimonials',
+  TESTIMONIALS_NEW: '/testimonials/new',
+  ADMIN: '/admin',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_REVIEWS: '/admin/reviews',
+  ADMIN_SERVICES: '/admin/servicios',
+  ADMIN_BLOG: '/admin/blog',
+  ADMIN_BLOG_NEW: '/admin/blog/new',
+  ADMIN_BLOG_EDIT: (id: number | string = ':id') => `/admin/blog/edit/${id}`,
+  ADMIN_EVENTS: '/admin/events',
+  ADMIN_EVENTS_NEW: '/admin/events/new',
+  ADMIN_EVENTS_EDIT: (id: number | string = ':id') => `/admin/events/edit/${id}`,
+  ADMIN_APPOINTMENTS: '/admin/appointments',
+  ADMIN_AVAILABILITY: '/admin/disponibilidad',
+  ADMIN_PRODUCTS: '/admin/productos',
+} as const;
+
+export const HIDE_CHROME_ROUTES: ReadonlySet<string> = new Set([
+  ROUTES.LOGIN,
+  ROUTES.REGISTER,
+  ROUTES.FORGOT_PASSWORD,
+  ROUTES.RESET_PASSWORD,
+]);
+
+export type RouteKey = keyof typeof ROUTES;
