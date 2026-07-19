@@ -1,14 +1,13 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
-import { AuthContext } from '../../services/authContext';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Modal from '../../components/Modal';
 import {
-  obtenerTodosLosUsuarios,
-  eliminarUsuario,
-  actualizarUsuarioAdmin,
-  type UsuarioFilters,
+  getAllUsers,
+  deleteUser,
+  updateUserAdmin,
+  type UserFilters,
   type Usuario,
-} from '../../services/usuariosService';
-import { extractList } from '../../services/apiClient';
+} from '../../services/usersService';
 
 interface EditFormData {
   nombre: string;
@@ -31,9 +30,7 @@ const ROLE_COLORS: Record<number, string> = {
 };
 
 const ManageUsers = () => {
-  const { token } = useContext(AuthContext);
-  const [users, setUsers] = useState<Usuario[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<{ name: string; role: 'all' | '1' | '2' }>({
     name: '',
@@ -53,45 +50,45 @@ const ManageUsers = () => {
     rol_id: '',
   });
 
-  const fetchUsers = useCallback(async () => {
-    if (!token) {
-      setError('No se encontró un token de autenticación.');
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const params: UsuarioFilters = {};
+  const usersQuery = useQuery<Usuario[]>({
+    queryKey: ['users-admin', filters],
+    queryFn: () => {
+      const params: UserFilters = {};
       if (filters.name) params.nombre = filters.name;
       if (filters.role !== 'all') params.rol = filters.role;
-      const data = await obtenerTodosLosUsuarios(params);
-      setUsers(extractList<Usuario>(data));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [token, filters]);
+      return getAllUsers(params);
+    },
+  });
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-admin'] });
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Usuario> }) =>
+      updateUserAdmin(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users-admin'] });
+      setShowEditModal(false);
+      setEditingUser(null);
+    },
+    onError: (err: Error) => setError(err.message),
+  });
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
-  const confirmDelete = async () => {
+  const confirmDelete = () => {
     if (!userToDelete) return;
-    try {
-      await eliminarUsuario(userToDelete);
-      setUsers((prev) => prev.filter((u) => u.usuario_id !== userToDelete));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setShowDeleteModal(false);
-    }
+    deleteMutation.mutate(userToDelete);
   };
 
   const requestDelete = (id: number) => {
@@ -113,39 +110,26 @@ const ManageUsers = () => {
     setShowEditModal(true);
   };
 
-  const handleUpdateUser = async (e: React.FormEvent) => {
+  const handleUpdateUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
-    try {
-      const updated: Record<string, unknown> = {};
-      Object.keys(editFormData).forEach((key) => {
-        const k = key as keyof EditFormData;
-        const incoming = editFormData[k];
-        const original = (editingUser as EditFormData)[k] ?? '';
-        if (incoming !== original) {
-          updated[key] = incoming;
-        }
-      });
-
-      if (Object.keys(updated).length === 0) {
-        setShowEditModal(false);
-        setEditingUser(null);
-        return;
+    const updated: Record<string, unknown> = {};
+    Object.keys(editFormData).forEach((key) => {
+      const k = key as keyof EditFormData;
+      const incoming = editFormData[k];
+      const original = (editingUser as unknown as EditFormData)[k] ?? '';
+      if (incoming !== original) {
+        updated[key] = incoming;
       }
+    });
 
-      const response = await actualizarUsuarioAdmin(editingUser.usuario_id, updated);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.usuario_id === editingUser.usuario_id
-            ? { ...u, ...((response as { usuario?: Usuario }).usuario || updated) }
-            : u,
-        ),
-      );
+    if (Object.keys(updated).length === 0) {
       setShowEditModal(false);
       setEditingUser(null);
-    } catch (err) {
-      setError((err as Error).message);
+      return;
     }
+
+    updateMutation.mutate({ id: editingUser.usuario_id, data: updated as Partial<Usuario> });
   };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -153,7 +137,9 @@ const ManageUsers = () => {
     setEditFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  if (loading) return <div className="text-center mt-10">Cargando usuarios...</div>;
+  if (usersQuery.isLoading) return <div className="text-center mt-10">Cargando usuarios...</div>;
+
+  const users = usersQuery.data ?? [];
   if (error)
     return (
       <div className="text-center text-red-500 mt-10" role="alert">

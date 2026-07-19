@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useUser } from '../../hooks/useUser';
-import { API_URL } from '../../services/apiClient';
-import { getToken } from '../../services/authService';
+import { createEvent, getEventById, updateEvent } from '../../services/eventsService';
 import type { Evento } from '../../types';
 
 interface EventoForm {
@@ -42,37 +42,44 @@ const EventForm = () => {
     ...initialFromState,
     capacidad: initialFromState.capacidad != null ? String(initialFromState.capacidad) : '',
   });
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const eventQuery = useQuery<Evento>({
+    queryKey: ['events', id],
+    queryFn: () => getEventById(id ?? ''),
+    enabled: isEditing && !initialFromState,
+  });
+
   useEffect(() => {
-    if (!isEditing || (location.state as LocationState | null)?.evento) return undefined;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`${API_URL}/eventos/${id}`, {
-          headers: { 'x-auth-token': getToken() ?? '' },
-        });
-        if (!res.ok) throw new Error('Error al cargar el evento');
-        const data = (await res.json()) as Partial<Evento>;
-        if (!cancelled) {
-          setForm({
-            nombre: data.nombre ?? '',
-            descripcion: data.descripcion ?? '',
-            fecha_inicio: data.fecha_inicio ?? '',
-            fecha_fin: data.fecha_fin ?? '',
-            ubicacion: data.ubicacion ?? '',
-            capacidad: data.capacidad != null ? String(data.capacidad) : '',
-          });
-        }
-      } catch (err) {
-        if (!cancelled) setError((err as Error).message);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [id, isEditing, location.state]);
+    if (!eventQuery.data) return;
+    setForm({
+      nombre: eventQuery.data.nombre ?? '',
+      descripcion: eventQuery.data.descripcion ?? '',
+      fecha_inicio: eventQuery.data.fecha_inicio ?? '',
+      fecha_fin: eventQuery.data.fecha_fin ?? '',
+      ubicacion: eventQuery.data.ubicacion ?? '',
+      capacidad: eventQuery.data.capacidad != null ? String(eventQuery.data.capacidad) : '',
+    });
+  }, [eventQuery.data]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        nombre: form.nombre,
+        descripcion: form.descripcion,
+        fecha_inicio: form.fecha_inicio,
+        fecha_fin: form.fecha_fin,
+        ubicacion: form.ubicacion,
+        capacidad: Number(form.capacidad),
+      };
+      return isEditing && id
+        ? updateEvent(Number(id), payload)
+        : createEvent(payload);
+    },
+    onSuccess: () => navigate('/admin/events'),
+    onError: (err: Error) =>
+      setError(err.message || 'Error al guardar el evento'),
+  });
 
   if (!isAdmin) {
     return (
@@ -87,30 +94,10 @@ const EventForm = () => {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
-    try {
-      const url = isEditing ? `${API_URL}/eventos/${id}` : `${API_URL}/eventos`;
-      const res = await fetch(url, {
-        method: isEditing ? 'PUT' : 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-auth-token': getToken() ?? '',
-        },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error((errorData as { message?: string }).message || 'Error al guardar el evento');
-      }
-      navigate('/admin/events');
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    saveMutation.mutate();
   };
 
   const textFields: Array<{ name: keyof EventoForm; label: string }> = [
@@ -118,6 +105,8 @@ const EventForm = () => {
     { name: 'descripcion', label: 'Descripción' },
     { name: 'ubicacion', label: 'Ubicación' },
   ];
+
+  const loading = saveMutation.isPending;
 
   return (
     <div className="max-w-3xl mx-auto p-6 bg-white mt-8 mb-8">

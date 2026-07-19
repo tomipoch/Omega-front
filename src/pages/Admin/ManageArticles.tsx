@@ -1,79 +1,49 @@
-import { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../services/authContext';
-import Modal from '../../components/Modal';
-import { extractList, API_URL } from '../../services/apiClient';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteArticle, getArticles } from '../../services/articlesService';
+import { useConfirm } from '../../hooks/useConfirm';
 import type { BlogArticulo } from '../../types';
 
-interface ArticlesResponse {
-  articles: BlogArticulo[];
-}
-
 const ManageArticles = () => {
-  const { token } = useContext(AuthContext);
-  const [articles, setArticles] = useState<BlogArticulo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [articleToDelete, setArticleToDelete] = useState<number | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { confirm } = useConfirm();
 
-  const fetchArticles = useCallback(async () => {
-    try {
-      if (!token) throw new Error('Usuario no autenticado. Inicia sesión nuevamente.');
-      const res = await fetch(`${API_URL}/blog`, {
-        headers: { 'x-auth-token': token },
-      });
-      if (!res.ok) throw new Error('Error al cargar los artículos');
-      const data = (await res.json()) as ArticlesResponse | BlogArticulo[];
-      setArticles(extractList<BlogArticulo>(data));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
+  const articlesQuery = useQuery<BlogArticulo[]>({
+    queryKey: ['articles-admin'],
+    queryFn: getArticles,
+  });
 
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
-
-  const toggleModal = () => setShowModal((v) => !v);
-
-  const confirmDelete = async () => {
-    if (articleToDelete === null) return;
-    try {
-      const res = await fetch(`${API_URL}/blog/${articleToDelete}`, {
-        method: 'DELETE',
-        headers: { 'x-auth-token': token ?? '' },
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error((errorData as { message?: string }).message || 'No se pudo eliminar el artículo.');
-      }
-      setArticles((prev) => prev.filter((a) => a.publicacion_id !== articleToDelete));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      toggleModal();
-    }
-  };
-
-  const requestDelete = (id: number) => {
-    setArticleToDelete(id);
-    setShowModal(true);
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => deleteArticle(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['articles-admin'] }),
+  });
 
   const handleEdit = (id: number) => navigate(`/admin/blog/edit/${id}`);
   const handleCreate = () => navigate('/admin/blog/new');
 
-  if (loading) return <div className="text-center mt-10">Cargando artículos...</div>;
-  if (error)
+  const handleDelete = async (id: number) => {
+    const ok = await confirm({
+      title: 'Eliminar artículo',
+      message: '¿Estás seguro de que deseas eliminar este artículo? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+    });
+    if (!ok) return;
+    deleteMutation.mutate(id);
+  };
+
+  if (articlesQuery.isLoading) {
+    return <div className="text-center mt-10">Cargando artículos...</div>;
+  }
+  if (articlesQuery.error) {
     return (
       <div className="text-center text-red-500 mt-10" role="alert">
-        {error}
+        {(articlesQuery.error as Error).message}
       </div>
     );
+  }
+
+  const articles = articlesQuery.data ?? [];
 
   return (
     <div className="max-w-6xl mx-auto p-4 font-ibm bg-white mt-8 mb-8">
@@ -117,7 +87,7 @@ const ManageArticles = () => {
                     </button>
                     <button
                       type="button"
-                      onClick={() => requestDelete(article.publicacion_id)}
+                      onClick={() => handleDelete(article.publicacion_id)}
                       className="bg-white text-sgreen py-2 px-3 rounded-2xl border border-gray-300 hover:bg-gray-200 transition"
                     >
                       Eliminar
@@ -138,15 +108,6 @@ const ManageArticles = () => {
           </tbody>
         </table>
       </div>
-      <Modal
-        showModal={showModal}
-        toggleModal={toggleModal}
-        onConfirm={confirmDelete}
-        title="Eliminar artículo"
-        message="¿Estás seguro de que deseas eliminar este artículo? Esta acción no se puede deshacer."
-        confirmText="Eliminar"
-        cancelText="Cancelar"
-      />
     </div>
   );
 };
