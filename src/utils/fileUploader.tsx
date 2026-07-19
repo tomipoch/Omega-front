@@ -3,30 +3,55 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { UploadCloud, Trash2 } from 'react-feather';
 import png from '../assets/png-icon.webp';
 import jpg from '../assets/jpg-icon.webp';
-import svg from '../assets/svg-icon.webp';
 
-const ACCEPTED_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif']);
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ACCEPTED_TYPES: ReadonlyArray<{ mime: string; ext: string }> = [
+  { mime: 'image/png', ext: 'png' },
+  { mime: 'image/jpeg', ext: 'jpg' },
+];
+
+const ACCEPTED_MIME_SET = new Set(ACCEPTED_TYPES.map((t) => t.mime));
 
 const ICONS: Record<string, string> = {
   png,
   jpg,
   jpeg: jpg,
-  svg,
 };
 
 const resolveIcon = (file: File): string => {
   const type = file.type || '';
   if (type.includes('png')) return png;
   if (type.includes('jpg') || type.includes('jpeg')) return jpg;
-  if (type.includes('svg')) return svg;
   const ext = type.split('/')[1];
   return (ext && ICONS[ext]) || '';
 };
 
-const fileKey = (file: File, index: number): string => `${file.name}-${file.size}-${index}`;
+export interface FileValidationResult {
+  accepted: File[];
+  rejected: Array<{ file: File; reason: string }>;
+}
+
+export const validateFiles = (incoming: File[]): FileValidationResult => {
+  const accepted: File[] = [];
+  const rejected: Array<{ file: File; reason: string }> = [];
+  for (const file of incoming) {
+    if (!ACCEPTED_MIME_SET.has(file.type)) {
+      rejected.push({ file, reason: 'Tipo de archivo no permitido' });
+      continue;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      rejected.push({ file, reason: 'Máx. 5 MB' });
+      continue;
+    }
+    accepted.push(file);
+  }
+  return { accepted, rejected };
+};
 
 interface DynamicUploadAreaProps {
   onUpload?: (files: File[]) => void;
+  onValidationError?: (rejected: Array<{ file: File; reason: string }>) => void;
 }
 
 export interface DynamicUploadAreaHandle {
@@ -34,14 +59,16 @@ export interface DynamicUploadAreaHandle {
 }
 
 const DynamicUploadArea = forwardRef<DynamicUploadAreaHandle, DynamicUploadAreaProps>(
-  ({ onUpload }, ref) => {
+  ({ onUpload, onValidationError }, ref) => {
     const [dragActive, setDragActive] = useState(false);
     const [files, setFiles] = useState<File[]>([]);
+    const [rejectionMessage, setRejectionMessage] = useState<string | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     useImperativeHandle(ref, () => ({
       reset: () => {
         setFiles([]);
+        setRejectionMessage(null);
         onUpload?.([]);
       },
     }));
@@ -49,15 +76,21 @@ const DynamicUploadArea = forwardRef<DynamicUploadAreaHandle, DynamicUploadAreaP
     const addFiles = useCallback(
       (incoming: File[]) => {
         if (!incoming.length) return;
-        const filtered = incoming.filter((file) => ACCEPTED_TYPES.has(file.type));
-        if (!filtered.length) return;
+        const { accepted, rejected } = validateFiles(incoming);
+        if (rejected.length > 0) {
+          setRejectionMessage(rejected[0].reason);
+          onValidationError?.(rejected);
+        } else {
+          setRejectionMessage(null);
+        }
+        if (!accepted.length) return;
         setFiles((prev) => {
-          const next = [...prev, ...filtered];
+          const next = [...prev, ...accepted];
           onUpload?.(next);
           return next;
         });
       },
-      [onUpload],
+      [onUpload, onValidationError],
     );
 
     const removeFile = useCallback(
@@ -109,7 +142,7 @@ const DynamicUploadArea = forwardRef<DynamicUploadAreaHandle, DynamicUploadAreaP
               triggerFileInput();
             }
           }}
-          aria-label="Subir imágenes"
+          aria-label="Subir imágenes (PNG o JPG, máx. 5 MB)"
         >
           <motion.div
             className="flex flex-col items-center"
@@ -122,7 +155,7 @@ const DynamicUploadArea = forwardRef<DynamicUploadAreaHandle, DynamicUploadAreaP
               <span className="text-sgreen font-medium">Haz clic para subir</span> o arrastra y suelta
               tus imágenes aquí.
             </p>
-            <p className="text-xs text-gray-400">SVG, PNG, JPG o GIF (máx. 5 MB)</p>
+            <p className="text-xs text-gray-400">PNG o JPG (máx. 5 MB)</p>
           </motion.div>
         </div>
 
@@ -132,14 +165,22 @@ const DynamicUploadArea = forwardRef<DynamicUploadAreaHandle, DynamicUploadAreaP
           multiple
           className="hidden"
           onChange={handleFileSelect}
-          accept="image/png,image/jpeg,image/svg+xml,image/gif"
+          accept="image/png,image/jpeg"
+          aria-hidden="true"
+          tabIndex={-1}
         />
+
+        {rejectionMessage && (
+          <p className="mt-2 text-sm text-red-600" role="alert">
+            {rejectionMessage}
+          </p>
+        )}
 
         <ul className="mt-4 space-y-2">
           <AnimatePresence>
             {files.map((file, index) => (
               <motion.li
-                key={fileKey(file, index)}
+                key={`${file.name}-${file.size}-${index}`}
                 className="flex justify-between items-center bg-gray-50 p-2 border border-gray-300 rounded"
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}

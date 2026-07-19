@@ -1,8 +1,5 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import Relojes from '../assets/Relojes.svg';
-import Joyas from '../assets/Joyas.svg';
-import Reparacion from '../assets/Reparacion.svg';
 
 interface ServiceItemProps {
   image: string;
@@ -23,6 +20,8 @@ const ServicioItem = ({ image, title, description, delay, inView }: ServiceItemP
       src={image}
       alt={title}
       className="w-72 h-72 mb-4 object-cover rounded-full"
+      loading="lazy"
+      decoding="async"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={inView ? { opacity: 1, scale: 1 } : {}}
       transition={{ delay: delay + 0.2, duration: 0.6, ease: 'easeOut', type: 'spring', stiffness: 120 }}
@@ -60,21 +59,21 @@ const ServiciosSection = () => {
 
       <div className="flex flex-col lg:flex-row items-center justify-center space-y-8 lg:space-y-0 lg:space-x-8">
         <ServicioItem
-          image={Relojes}
+          image="/assets/Relojes.svg"
           title="Venta de Relojes y Joyas"
           description="Descubre nuestra colección de relojes y joyas únicas y elegantes para todas las ocasiones."
           delay={0.5}
           inView={inView}
         />
         <ServicioItem
-          image={Joyas}
+          image="/assets/Joyas.svg"
           title="Personalización de Joyas"
           description="Crea joyas únicas que reflejen tu estilo y personalidad."
           delay={0.7}
           inView={inView}
         />
         <ServicioItem
-          image={Reparacion}
+          image="/assets/Reparacion.svg"
           title="Reparación de Relojes"
           description="Reparamos tus relojes favoritos para que vuelvan a funcionar como nuevos."
           delay={0.9}

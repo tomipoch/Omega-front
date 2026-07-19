@@ -29,6 +29,8 @@ const About = () => (
           <img
             src={Omega1}
             alt="Fundador Don Luis González Vázquez"
+            loading="lazy"
+            decoding="async"
             className="w-full h-full object-cover rounded-lg shadow-lg hover:shadow-2xl transition duration-300"
           />
         </div>
@@ -53,6 +55,8 @@ const About = () => (
           <img
             src={Omega2}
             alt="Local Actual en 1 Sur N°1610"
+            loading="lazy"
+            decoding="async"
             className="rounded-lg shadow-lg hover:shadow-2xl transition duration-300"
           />
         </div>
@@ -66,6 +70,8 @@ const About = () => (
           <img
             src={logo}
             alt="Logo de Relojería y Joyería Omega"
+            loading="lazy"
+            decoding="async"
             className="w-56 h-auto object-cover"
           />
         </div>

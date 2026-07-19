@@ -87,7 +87,7 @@ const Profile = () => {
       {(data) => (
         <div className="max-w-4xl mx-auto my-10 mt-10 p-0 bg-white rounded-2xl overflow-hidden border border-gray-200">
           <div className="relative">
-            <img src={userBackground} alt="" className="w-full h-48 object-cover" aria-hidden="true" />
+            <img src={userBackground} alt="" decoding="async" className="w-full h-48 object-cover" aria-hidden="true" />
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white w-40 h-40 bg-gray-200">
               <ProfilePhotoEditor
                 currentImage={croppedImage || data.foto_perfil_url || null}
