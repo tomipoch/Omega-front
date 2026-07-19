@@ -67,11 +67,12 @@ const Header = () => {
           <button
             type="button"
             onClick={toggleMobileMenu}
-            className="md:hidden text-gray-700"
-            aria-label="Abrir menú"
+            className="md:hidden text-gray-700 focus:outline-none focus:ring-2 focus:ring-sgreen rounded"
+            aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
           >
-            <FaBars size={ICON_SIZES.md} />
+            <FaBars size={ICON_SIZES.md} aria-hidden="true" />
           </button>
         </div>
       </div>

@@ -52,18 +52,32 @@ export const ProfilePhotoEditor = ({
 
   return (
     <>
-      <img
-        src={profileImage || fallbackImage}
-        alt="Imagen de perfil"
-        className="w-full h-full object-cover rounded-full"
+      <button
+        type="button"
         onClick={() => hiddenFileInput.current?.click()}
-      />
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            hiddenFileInput.current?.click();
+          }
+        }}
+        aria-label="Cambiar imagen de perfil"
+        className="w-full h-full rounded-full focus:outline-none focus:ring-2 focus:ring-sgreen cursor-pointer"
+      >
+        <img
+          src={profileImage || fallbackImage}
+          alt="Imagen de perfil actual"
+          className="w-full h-full object-cover rounded-full"
+        />
+      </button>
       <input
         type="file"
         ref={hiddenFileInput}
         onChange={handleImageChange}
         style={{ display: 'none' }}
         accept="image/*"
+        aria-hidden="true"
+        tabIndex={-1}
       />
       {showCropper && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">

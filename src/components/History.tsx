@@ -1,7 +1,6 @@
 import { useRef, useMemo } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import type { MotionValue } from 'framer-motion';
-import Historia from '../assets/Historia.svg';
 
 const TEXT =
   'Desde 1948, Relojería y Joyería Omega de Talca ha ofrecido joyas y relojes de alta calidad, junto con servicios técnicos especializados, convirtiéndonos en un referente de confianza en la región del Maule. Nuestra misión es brindar productos y servicios de joyería y relojería de excelente calidad, con atención personalizada y soluciones integrales que acompañen a nuestros clientes en momentos especiales. En "OMEGA" queremos ser la joyería y relojería líder en la región, reconocida por la calidad, exclusividad y confianza, innovando continuamente para satisfacer a nuestros clientes.';
@@ -64,7 +63,13 @@ const HistoriaSection = () => {
           className="flex justify-center sticky top-1/3 transform -translate-y-1/3"
         >
           <div className="bg-white p-4 rounded-2xl shadow-2xl">
-            <img src={Historia} alt="Historia" className="w-60 h-auto md:w-80 lg:w-[24rem]" />
+            <img
+              src="/assets/Historia.svg"
+              alt="Historia"
+              className="w-60 h-auto md:w-80 lg:w-[24rem]"
+              loading="lazy"
+              decoding="async"
+            />
             <p className="text-center text-black text-sm md:text-lg lg:text-xl mt-2">OMEGA año 1948</p>
           </div>
         </motion.div>

@@ -27,17 +27,23 @@ export const AppointmentCard = ({
   const status = normalizeAppointmentStatus(cita.estado_nombre);
   const statusColors = APPOINTMENT_STATUS_COLORS[status];
   const statusLabel = APPOINTMENT_STATUS_LABELS[status];
+  const hasActions = Boolean(onEdit || onDelete || onSelect);
 
   return (
     <motion.article
       layout
-      className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      onClick={() => onSelect?.(cita)}
+      aria-labelledby={`cita-${cita.cita_id}-titulo`}
     >
       <div className="flex justify-between items-start mb-3">
-        <h3 className="text-lg font-medium text-gray-800">{cita.servicio_nombre}</h3>
+        <h3
+          id={`cita-${cita.cita_id}-titulo`}
+          className="text-lg font-medium text-gray-800"
+        >
+          {cita.servicio_nombre}
+        </h3>
         <span className={`text-xs px-2 py-1 rounded-full ${statusColors}`}>{statusLabel}</span>
       </div>
 
@@ -78,13 +84,21 @@ export const AppointmentCard = ({
         )}
       </dl>
 
-      {(onEdit || onDelete) && (
+      {hasActions && (
         <div
-          className="flex justify-between space-x-2"
-          onClick={(e) => e.stopPropagation()}
+          className="flex flex-wrap gap-2"
           role="group"
           aria-label="Acciones de la cita"
         >
+          {onSelect && (
+            <button
+              type="button"
+              onClick={() => onSelect(cita)}
+              className="bg-gray-100 text-gray-700 py-2 px-4 text-sm rounded-lg hover:bg-gray-200 transition"
+            >
+              Ver detalles
+            </button>
+          )}
           {onEdit && (
             <button
               type="button"

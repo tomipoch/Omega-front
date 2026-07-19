@@ -9,14 +9,14 @@ const Footer = () => (
         <section aria-labelledby="social-media" className="flex flex-col items-center md:items-start">
           <img src="/vite.svg" alt="Logotipo de OMEGA" className="w-40 h-auto mb-6" />
           <address className="flex space-x-6 justify-center md:justify-start not-italic">
-            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-              <FaFacebook size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook de OMEGA">
+              <FaFacebook size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" aria-hidden="true" />
             </a>
-            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-              <FaInstagram size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram de OMEGA">
+              <FaInstagram size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" aria-hidden="true" />
             </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
-              <FaLinkedin size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" />
+            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn de OMEGA">
+              <FaLinkedin size={ICON_SIZES.xl} className="hover:text-bgreen transition-colors duration-300" aria-hidden="true" />
             </a>
           </address>
         </section>

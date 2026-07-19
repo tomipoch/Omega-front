@@ -1,16 +1,15 @@
 import { motion } from 'framer-motion';
-import Anillos from '../assets/Anillos.svg';
 
 const HeroSection = () => (
   <section className="flex flex-col font-ibm items-center justify-center text-center py-20 min-h-screen bg-white text-black">
-    <motion.h2
+    <motion.h1
       className="text-5xl font-bold max-w-lg mb-10"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
     >
       Encuentra la <span className="text-gold-effect">Joya</span> perfecta para ti
-    </motion.h2>
+    </motion.h1>
 
     <motion.p
       className="text-xl max-w-lg mb-6"
@@ -23,9 +22,11 @@ const HeroSection = () => (
     </motion.p>
 
     <motion.img
-      src={Anillos}
+      src="/assets/Anillos.svg"
       alt="Anillos"
       className="w-72 h-72"
+      loading="lazy"
+      decoding="async"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{
